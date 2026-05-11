@@ -122,14 +122,14 @@ export default function UploadPage() {
   if (status === "success") {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-10 max-w-md w-full text-center">
-          <div className="bg-green-50 rounded-full p-4 w-fit mx-auto mb-4">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 p-10 max-w-md w-full text-center">
+          <div className="bg-green-50 dark:bg-green-900/30 rounded-full p-4 w-fit mx-auto mb-4">
             <CheckCircle className="w-12 h-12 text-green-500" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             Upload Successful!
           </h2>
-          <p className="text-gray-500 mb-6">
+          <p className="text-gray-500 dark:text-gray-400 mb-6">
             Your video <strong>&quot;{title}&quot;</strong> has been uploaded
             and is now processing.
           </p>
@@ -147,7 +147,7 @@ export default function UploadPage() {
                 setFile(null);
                 if (fileInputRef.current) fileInputRef.current.value = "";
               }}
-              className="px-6 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-full hover:bg-gray-200 transition"
+              className="px-6 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition"
             >
               Upload Another
             </button>
@@ -159,14 +159,14 @@ export default function UploadPage() {
 
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
-      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 max-w-lg w-full">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 p-8 max-w-lg w-full">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="bg-blue-50 rounded-full p-4 w-fit mx-auto mb-3">
-            <Upload className="w-8 h-8 text-blue-600" />
+          <div className="bg-blue-50 dark:bg-blue-900/30 rounded-full p-4 w-fit mx-auto mb-3">
+            <Upload className="w-8 h-8 text-blue-600 dark:text-blue-500" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Upload Video</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Upload Video</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             Share your video with the DOSHUB community
           </p>
         </div>
@@ -176,7 +176,7 @@ export default function UploadPage() {
           <div>
             <label
               htmlFor="video-title"
-              className="block text-sm font-medium text-gray-700 mb-1.5"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
             >
               Video Title
             </label>
@@ -188,26 +188,26 @@ export default function UploadPage() {
               placeholder="Enter a descriptive title..."
               required
               disabled={status === "uploading"}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm text-gray-800 bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:bg-white placeholder-gray-400 transition disabled:opacity-50"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-800/50 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:bg-white dark:focus:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-500 transition disabled:opacity-50"
             />
           </div>
 
           {/* File Input */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
               Video File
             </label>
             {!file ? (
               <label
                 htmlFor="video-file"
-                className="upload-zone flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50"
+                className="upload-zone flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl cursor-pointer bg-gray-50 dark:bg-gray-800/50 hover:dark:bg-gray-800"
               >
-                <FileVideo className="w-10 h-10 text-gray-300 mb-2" />
-                <p className="text-sm text-gray-500">
-                  <span className="text-blue-600 font-medium">Click to browse</span>{" "}
+                <FileVideo className="w-10 h-10 text-gray-300 dark:text-gray-600 mb-2" />
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <span className="text-blue-600 dark:text-blue-500 font-medium">Click to browse</span>{" "}
                   or drag a file
                 </p>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                   MP4, WebM — Max 500MB
                 </p>
                 <input
@@ -221,13 +221,13 @@ export default function UploadPage() {
                 />
               </label>
             ) : (
-              <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+              <div className="flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-xl">
                 <FileVideo className="w-8 h-8 text-blue-500 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800 truncate">
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
                     {file.name}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     {(file.size / (1024 * 1024)).toFixed(2)} MB
                   </p>
                 </div>
@@ -235,9 +235,9 @@ export default function UploadPage() {
                   <button
                     type="button"
                     onClick={removeFile}
-                    className="p-1 rounded-full hover:bg-blue-100 transition"
+                    className="p-1 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/50 transition"
                   >
-                    <X className="w-4 h-4 text-gray-500" />
+                    <X className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                   </button>
                 )}
               </div>
@@ -246,9 +246,9 @@ export default function UploadPage() {
 
           {/* Error Message */}
           {status === "error" && (
-            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl">
+            <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl">
               <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
-              <p className="text-sm text-red-600">{errorMsg}</p>
+              <p className="text-sm text-red-600 dark:text-red-400">{errorMsg}</p>
             </div>
           )}
 

@@ -12,7 +12,7 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
       <Navbar onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
       <Sidebar isOpen={sidebarOpen} />
       <main
-        className={`mt-14 min-h-[calc(100vh-3.5rem)] transition-all duration-300 ease-in-out bg-gray-50 ${
+        className={`mt-14 min-h-[calc(100vh-3.5rem)] transition-all duration-300 ease-in-out bg-gray-50 dark:bg-[#0a0a0a] ${
           sidebarOpen ? "ml-56" : "ml-[72px]"
         }`}
       >

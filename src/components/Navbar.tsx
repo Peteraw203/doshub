@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Play, Search, Upload, Menu } from "lucide-react";
+import { ThemeToggle } from "./ThemeToggle";
 
 interface NavbarProps {
   onToggleSidebar: () => void;
@@ -9,22 +10,22 @@ interface NavbarProps {
 
 export default function Navbar({ onToggleSidebar }: NavbarProps) {
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 shadow-sm">
+    <header className="fixed top-0 left-0 right-0 z-50 h-14 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-4 shadow-sm">
       {/* Left: Hamburger + Logo */}
       <div className="flex items-center gap-4">
         <button
           onClick={onToggleSidebar}
-          className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+          className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           aria-label="Toggle sidebar"
         >
-          <Menu className="w-5 h-5 text-gray-700" />
+          <Menu className="w-5 h-5 text-gray-700 dark:text-gray-300" />
         </button>
         <Link href="/" className="flex items-center gap-1.5 group">
           <div className="bg-blue-600 rounded-lg p-1.5 group-hover:bg-blue-700 transition-colors">
             <Play className="w-5 h-5 text-white fill-white" />
           </div>
-          <span className="text-xl font-bold text-gray-900 tracking-tight">
-            DOS<span className="text-blue-600">HUB</span>
+          <span className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
+            DOS<span className="text-blue-600 dark:text-blue-500">HUB</span>
           </span>
         </Link>
       </div>
@@ -35,16 +36,17 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
           <input
             type="text"
             placeholder="Search videos..."
-            className="w-full px-4 py-2 border border-gray-300 rounded-l-full text-sm text-gray-800 bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder-gray-400"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-l-full text-sm text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder-gray-400 dark:placeholder-gray-500"
           />
-          <button className="px-5 py-2 bg-gray-50 border border-l-0 border-gray-300 rounded-r-full hover:bg-gray-100 transition-colors">
-            <Search className="w-4 h-4 text-gray-600" />
+          <button className="px-5 py-2 bg-gray-50 dark:bg-gray-800/50 border border-l-0 border-gray-300 dark:border-gray-700 rounded-r-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+            <Search className="w-4 h-4 text-gray-600 dark:text-gray-400" />
           </button>
         </div>
       </div>
 
       {/* Right: Upload Button */}
       <div className="flex items-center gap-3">
+        <ThemeToggle />
         <Link
           href="/upload"
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-full hover:bg-blue-700 transition-all hover:shadow-lg hover:shadow-blue-200 active:scale-95"

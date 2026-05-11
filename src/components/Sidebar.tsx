@@ -41,7 +41,7 @@ export default function Sidebar({ isOpen }: SidebarProps) {
       )}
 
       <aside
-        className={`fixed left-0 top-14 bottom-0 z-40 bg-white border-r border-gray-100 transition-all duration-300 ease-in-out overflow-y-auto scrollbar-thin ${
+        className={`fixed left-0 top-14 bottom-0 z-40 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 transition-all duration-300 ease-in-out overflow-y-auto scrollbar-thin ${
           isOpen ? "w-56" : "w-[72px]"
         }`}
       >
@@ -49,7 +49,7 @@ export default function Sidebar({ isOpen }: SidebarProps) {
           {menuItems.map((item, index) => {
             if (item.label === "divider") {
               return (
-                <div key={index} className="my-2 mx-3 border-t border-gray-200" />
+                <div key={index} className="my-2 mx-3 border-t border-gray-200 dark:border-gray-800" />
               );
             }
 
@@ -63,20 +63,20 @@ export default function Sidebar({ isOpen }: SidebarProps) {
                 href={item.href}
                 className={`flex items-center gap-5 mx-1.5 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
                   isActive
-                    ? "bg-blue-50 text-blue-700 font-medium"
+                    ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-medium"
                     : isDisabled
-                    ? "text-gray-400 cursor-default"
-                    : "text-gray-700 hover:bg-gray-100"
+                    ? "text-gray-400 dark:text-gray-600 cursor-default"
+                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                 } ${!isOpen ? "justify-center px-0" : ""}`}
                 onClick={(e) => isDisabled && e.preventDefault()}
               >
                 <Icon
                   className={`w-5 h-5 flex-shrink-0 transition-colors ${
                     isActive
-                      ? "text-blue-600"
+                      ? "text-blue-600 dark:text-blue-500"
                       : isDisabled
-                      ? "text-gray-300"
-                      : "text-gray-600 group-hover:text-gray-900"
+                      ? "text-gray-300 dark:text-gray-700"
+                      : "text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200"
                   }`}
                 />
                 {isOpen && (

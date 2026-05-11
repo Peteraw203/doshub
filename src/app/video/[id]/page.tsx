@@ -96,9 +96,9 @@ export default function VideoPlayerPage() {
   if (loading) {
     return (
       <div className="flex flex-col animate-pulse gap-4 max-w-5xl mx-auto">
-        <div className="w-full aspect-video bg-gray-200 rounded-xl" />
-        <div className="h-6 bg-gray-200 w-1/2 rounded" />
-        <div className="h-4 bg-gray-200 w-1/4 rounded" />
+        <div className="w-full aspect-video bg-gray-200 dark:bg-gray-800 rounded-xl" />
+        <div className="h-6 bg-gray-200 dark:bg-gray-800 w-1/2 rounded" />
+        <div className="h-4 bg-gray-200 dark:bg-gray-800 w-1/4 rounded" />
       </div>
     );
   }
@@ -107,8 +107,8 @@ export default function VideoPlayerPage() {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
-        <h2 className="text-xl font-bold text-gray-900">Oops!</h2>
-        <p className="text-gray-500 mt-2">{error}</p>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white">Oops!</h2>
+        <p className="text-gray-500 dark:text-gray-400 mt-2">{error}</p>
         <button
           onClick={() => window.history.back()}
           className="mt-6 px-6 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700"
@@ -123,7 +123,7 @@ export default function VideoPlayerPage() {
     <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-6">
       {/* KIRI: Video Player Utama (70%) */}
       <div className="w-full lg:w-[70%] flex flex-col gap-4">
-        <div className="w-full aspect-video bg-black rounded-xl overflow-hidden shadow-lg border border-gray-100">
+        <div className="w-full aspect-video bg-black rounded-xl overflow-hidden shadow-lg border border-gray-100 dark:border-gray-800">
           <video
             src={video.videoUrl}
             controls
@@ -134,7 +134,7 @@ export default function VideoPlayerPage() {
 
         {/* Info Video */}
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900">
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">
             {video.title}
           </h1>
 
@@ -145,8 +145,8 @@ export default function VideoPlayerPage() {
                 {video.title?.charAt(0)?.toUpperCase() || "D"}
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-gray-900">DOSHUB Creator</h3>
-                <p className="text-xs text-gray-500">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">DOSHUB Creator</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   {video.uploadTime ? timeAgo(video.uploadTime) : "Baru saja"}
                 </p>
               </div>
@@ -157,14 +157,14 @@ export default function VideoPlayerPage() {
               <button
                 onClick={handleLike}
                 disabled={isLiking}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full text-sm font-medium transition disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded-full text-sm font-medium transition disabled:opacity-50"
               >
                 <ThumbsUp className={`w-4 h-4 ${isLiking ? "text-blue-600 fill-blue-600" : ""}`} />
                 {likes}
               </button>
               <button
                 onClick={handleShare}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full text-sm font-medium transition"
+                className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded-full text-sm font-medium transition"
               >
                 <Share2 className="w-4 h-4" />
                 Share
@@ -176,21 +176,21 @@ export default function VideoPlayerPage() {
 
       {/* KANAN: Rekomendasi (30% - Placeholder) */}
       <div className="w-full lg:w-[30%]">
-        <h3 className="text-lg font-bold text-gray-900 mb-4">Video Lainnya</h3>
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Video Lainnya</h3>
         <div className="flex flex-col gap-3">
           {/* Ini cuma Dummy UI biar mirip YouTube */}
           {[1, 2, 3].map((item) => (
             <div key={item} className="flex gap-2 group cursor-pointer">
-              <div className="w-40 aspect-video bg-gray-200 rounded-lg flex-shrink-0 relative overflow-hidden">
+              <div className="w-40 aspect-video bg-gray-200 dark:bg-gray-800 rounded-lg flex-shrink-0 relative overflow-hidden">
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-xs text-gray-400">Loading...</span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500">Loading...</span>
                 </div>
               </div>
               <div className="flex flex-col">
-                <h4 className="text-sm font-semibold line-clamp-2 group-hover:text-blue-600">
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400">
                   Video Rekomendasi {item}
                 </h4>
-                <p className="text-xs text-gray-500 mt-1">DOSHUB</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">DOSHUB</p>
               </div>
             </div>
           ))}
