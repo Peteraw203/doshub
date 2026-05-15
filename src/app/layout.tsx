@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import LayoutShell from "@/components/LayoutShell";
+import AmplifyConfig from "@/components/AmplifyConfig";
 
 const inter = Inter({
   variable: "--font-geist-sans",
@@ -27,6 +28,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning className={`${inter.variable} h-full antialiased`}>
       <body className="min-h-full">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <AmplifyConfig />
           <LayoutShell>{children}</LayoutShell>
         </ThemeProvider>
       </body>

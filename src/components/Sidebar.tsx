@@ -12,6 +12,10 @@ import {
   Upload,
   Users,
 } from "lucide-react";
+import { getCurrentUser } from "aws-amplify/auth";
+import { Hub } from "aws-amplify/utils";
+import { useEffect, useState } from "react";
+
 
 interface SidebarProps {
   isOpen: boolean;
@@ -27,11 +31,47 @@ const menuItems = [
   { label: "Liked Videos", icon: ThumbsUp, href: "#" },
   { label: "divider", icon: null, href: "" },
   { label: "Upload", icon: Upload, href: "/upload" },
-  { label: "Your Videos", icon: Film, href: "#" },
+  { label: "Your Videos", icon: Film, href: "/your-videos" },
 ];
 
 export default function Sidebar({ isOpen }: SidebarProps) {
   const pathname = usePathname();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    checkAuth();
+
+    // Listen for auth events
+    const unsubscribe = Hub.listen("auth", ({ payload }) => {
+      switch (payload.event) {
+        case "signedIn":
+          setIsAuthenticated(true);
+          break;
+        case "signedOut":
+          setIsAuthenticated(false);
+          break;
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  async function checkAuth() {
+    try {
+      await getCurrentUser();
+      setIsAuthenticated(true);
+    } catch {
+      setIsAuthenticated(false);
+    }
+  }
+
+  // Filter menu items based on auth status
+  const filteredMenuItems = menuItems.filter(item => {
+    if (!isAuthenticated && (item.href === "/upload" || item.href === "/your-videos")) {
+      return false;
+    }
+    return true;
+  });
 
   return (
     <>
@@ -46,7 +86,7 @@ export default function Sidebar({ isOpen }: SidebarProps) {
         }`}
       >
         <nav className="flex flex-col py-2">
-          {menuItems.map((item, index) => {
+          {filteredMenuItems.map((item, index) => {
             if (item.label === "divider") {
               return (
                 <div key={index} className="my-2 mx-3 border-t border-gray-200 dark:border-gray-800" />
@@ -85,6 +125,20 @@ export default function Sidebar({ isOpen }: SidebarProps) {
               </Link>
             );
           })}
+
+          {!isAuthenticated && isOpen && (
+            <div className="mx-4 mt-6 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-800">
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
+                Sign in to upload, like, and comment on videos.
+              </p>
+              <Link
+                href="/auth"
+                className="flex items-center justify-center gap-2 w-full py-2 bg-white dark:bg-gray-900 text-blue-600 dark:text-blue-400 text-xs font-bold rounded-full border border-blue-100 dark:border-blue-900/50 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all active:scale-95 shadow-sm"
+              >
+                Sign In
+              </Link>
+            </div>
+          )}
         </nav>
       </aside>
     </>

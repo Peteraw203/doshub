@@ -4,11 +4,57 @@ import Link from "next/link";
 import { Play, Search, Upload, Menu } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 
+import { useState, useEffect } from "react";
+import { getCurrentUser, signOut } from "aws-amplify/auth";
+import { Hub } from "aws-amplify/utils";
+import { useRouter } from "next/navigation";
+
 interface NavbarProps {
   onToggleSidebar: () => void;
 }
 
 export default function Navbar({ onToggleSidebar }: NavbarProps) {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    checkAuth();
+    
+    // Listen for auth events
+    const unsubscribe = Hub.listen("auth", ({ payload }) => {
+      switch (payload.event) {
+        case "signedIn":
+          setIsAuthenticated(true);
+          break;
+        case "signedOut":
+          setIsAuthenticated(false);
+          break;
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  async function checkAuth() {
+    try {
+      await getCurrentUser();
+      setIsAuthenticated(true);
+    } catch {
+      setIsAuthenticated(false);
+    }
+  }
+
+  async function handleSignOut() {
+    try {
+      await signOut();
+      setIsAuthenticated(false);
+      router.push("/");
+      window.location.reload(); // Refresh to clear all states
+    } catch (error) {
+      console.error("Error signing out: ", error);
+    }
+  }
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 h-14 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-4 shadow-sm">
       {/* Left: Hamburger + Logo */}
@@ -44,20 +90,34 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
         </div>
       </div>
 
-      {/* Right: Upload Button */}
+      {/* Right Section */}
       <div className="flex items-center gap-3">
         <ThemeToggle />
-        <Link
-          href="/upload"
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-full hover:bg-blue-700 transition-all hover:shadow-lg hover:shadow-blue-200 active:scale-95"
-        >
-          <Upload className="w-4 h-4" />
-          <span className="hidden md:inline">Upload</span>
-        </Link>
-        {/* Dummy user avatar */}
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-xs font-bold cursor-pointer">
-          U
-        </div>
+        
+        {isAuthenticated ? (
+          <>
+            <Link
+              href="/upload"
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-full hover:bg-blue-700 transition-all hover:shadow-lg hover:shadow-blue-200 active:scale-95"
+            >
+              <Upload className="w-4 h-4" />
+              <span className="hidden md:inline">Upload</span>
+            </Link>
+            <button
+              onClick={handleSignOut}
+              className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-all active:scale-95 border border-gray-200 dark:border-gray-700"
+            >
+              Sign Out
+            </button>
+          </>
+        ) : (
+          <Link
+            href="/auth"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-full hover:bg-blue-700 transition-all hover:shadow-lg hover:shadow-blue-200 active:scale-95"
+          >
+            Sign In
+          </Link>
+        )}
       </div>
     </header>
   );

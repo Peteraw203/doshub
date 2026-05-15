@@ -11,6 +11,11 @@ import {
   X,
 } from "lucide-react";
 import { API_BASE_URL, stripQueryParams } from "@/lib/utils";
+import { fetchAuthSession } from "aws-amplify/auth";
+
+
+import { getCurrentUser } from "aws-amplify/auth";
+import { useEffect } from "react";
 
 type UploadStatus = "idle" | "uploading" | "success" | "error";
 
@@ -23,6 +28,19 @@ export default function UploadPage() {
   const [status, setStatus] = useState<UploadStatus>("idle");
   const [progress, setProgress] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        await getCurrentUser();
+        setIsCheckingAuth(false);
+      } catch {
+        router.push("/auth");
+      }
+    };
+    checkUser();
+  }, [router]);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
@@ -48,34 +66,39 @@ export default function UploadPage() {
     try {
       // Step A: Request presigned URL
       setProgress("Requesting upload URL...");
+
       const presignRes = await fetch(`${API_BASE_URL}/upload-url`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json"
+        },
         body: JSON.stringify({ fileName: file.name }),
       });
 
       if (!presignRes.ok) {
-        throw new Error(`Failed to get upload URL (${presignRes.status})`);
+        const errBody = await presignRes.json().catch(() => ({}));
+        console.error("[Auth Debug] Upload URL error response:", JSON.stringify(errBody));
+        console.error("[Auth Debug] Status:", presignRes.status);
+        throw new Error(errBody.detail || errBody.error || `Failed to get upload URL (${presignRes.status})`);
       }
 
       const presignData = await presignRes.json();
       const { uploadUrl, fileName } = presignData;
       console.log("[Step A] Presigned URL response:", presignData);
 
-      // Step B: Upload file to S3 via server-side proxy (avoids CORS)
+      // Step B: Upload file directly to S3 (bypasses Next.js server limits)
       setProgress("Uploading video file...");
-      const formData = new FormData();
-      formData.append("uploadUrl", uploadUrl);
-      formData.append("file", file);
-
-      const uploadRes = await fetch(`${API_BASE_URL}/s3-upload`, {
-        method: "POST",
-        body: formData,
+      
+      const uploadRes = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": file.type || "video/mp4",
+        },
+        body: file, // Send the file object directly (as a stream)
       });
 
       if (!uploadRes.ok) {
-        const uploadErr = await uploadRes.json().catch(() => ({}));
-        console.error("[Step B] S3 upload failed:", uploadErr);
+        console.error("[Step B] S3 direct upload failed:", uploadRes.status);
         throw new Error(`File upload failed (${uploadRes.status})`);
       }
       console.log("[Step B] S3 upload succeeded");
@@ -84,29 +107,28 @@ export default function UploadPage() {
       setProgress("Saving video metadata...");
       const videoUrl = stripQueryParams(uploadUrl);
       const saveBody = {
-        videoId: fileName,
+        video_id: fileName, // format snake_case
+        videoId: fileName,  // format camelCase (fallback)
         title: title.trim(),
+        video_url: videoUrl,
         videoUrl: videoUrl,
       };
-      console.log("[Step C] Saving metadata with body:", saveBody);
+      
+      const saveRes = await fetch(`${API_BASE_URL}/save-video`, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(saveBody),
+      });
 
-      try {
-        const saveRes = await fetch(`${API_BASE_URL}/save-video`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(saveBody),
-        });
-
-        if (!saveRes.ok) {
-          const saveErr = await saveRes.json().catch(() => ({}));
-          console.warn("[Step C] Save-video returned non-200, but file is in S3:", saveErr);
-        } else {
-          console.log("[Step C] Metadata saved successfully");
-        }
-      } catch (saveError) {
-        console.warn("[Step C] Save-video request failed, but file is in S3:", saveError);
+      if (!saveRes.ok) {
+        const saveErr = await saveRes.json().catch(() => ({}));
+        console.error("[Step C] Save-video failed:", saveErr);
+        throw new Error(saveErr.error || "Failed to save video information to database.");
       }
 
+      console.log("[Step C] Metadata saved successfully");
       setStatus("success");
       setProgress("");
     } catch (err) {
@@ -118,6 +140,14 @@ export default function UploadPage() {
       setProgress("");
     }
   };
+
+  if (isCheckingAuth) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
+        <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
+      </div>
+    );
+  }
 
   if (status === "success") {
     return (

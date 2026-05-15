@@ -5,17 +5,19 @@ const AWS_API = process.env.AWS_API_URL || "";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    console.log("[save-video] Request body:", JSON.stringify(body, null, 2));
+    console.log("[save-video] Proxying body to AWS:", JSON.stringify(body, null, 2));
 
     const res = await fetch(`${AWS_API}/save-video`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify(body),
     });
 
-    // Read the raw response text for debugging
     const responseText = await res.text();
-    console.log(`[save-video] AWS status: ${res.status}, response:`, responseText);
+    console.log(`[save-video] AWS response status: ${res.status}`);
+    console.log(`[save-video] AWS response body: ${responseText}`);
 
     if (!res.ok) {
       return NextResponse.json(
