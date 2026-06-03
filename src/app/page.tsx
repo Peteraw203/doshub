@@ -249,12 +249,6 @@ function HomePageContent() {
     </div>
   );
 }
-<<<<<<< Updated upstream
-/*
-Deploy 2
-*/
-=======
->>>>>>> Stashed changes
 
 export default function HomePage() {
   return (
