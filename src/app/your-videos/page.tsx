@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Play, Trash2, Film, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Video, VideosResponse } from "@/types";
 import { timeAgo, API_BASE_URL } from "@/lib/utils";
-import { fetchAuthSession, getCurrentUser } from "aws-amplify/auth";
+import { fetchAuthSession, getCurrentUser, fetchUserAttributes } from "aws-amplify/auth";
 import { useRouter } from "next/navigation";
 
 export default function YourVideosPage() {
@@ -34,10 +34,19 @@ export default function YourVideosPage() {
     try {
       setLoading(true);
       setError(null);
+
+      // Get current logged-in user's email
+      const attrs = await fetchUserAttributes();
+      const userEmail = attrs.email;
+
       const res = await fetch(`${API_BASE_URL}/videos`);
       if (!res.ok) throw new Error(`Failed to fetch videos (${res.status})`);
       const data: VideosResponse = await res.json();
-      setVideos(data.videos || []);
+
+      // Filter videos by uploader email
+      const allVideos = data.videos || [];
+      const userVideos = allVideos.filter((v) => v.uploader === userEmail);
+      setVideos(userVideos);
     } catch (err) {
       console.error("Error fetching videos:", err);
       setError(err instanceof Error ? err.message : "Failed to load videos.");
@@ -191,7 +200,7 @@ export default function YourVideosPage() {
             {videos.map((video) => (
               <div
                 key={video.videoId}
-                className="group bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4 md:p-5 transition-all hover:shadow-xl hover:shadow-gray-200/50 dark:hover:shadow-none hover:-translate-y-0.5"
+                className="group bg-white/40 dark:bg-gray-900/10 rounded-2xl p-4 md:p-5 transition-all hover:bg-white dark:hover:bg-gray-900/30 hover:shadow-sm"
               >
                 <div className="grid grid-cols-1 md:grid-cols-12 items-center gap-4 md:gap-6">
                   {/* Thumbnail & Info */}

@@ -11,10 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { API_BASE_URL, stripQueryParams } from "@/lib/utils";
-import { fetchAuthSession } from "aws-amplify/auth";
-
-
-import { getCurrentUser } from "aws-amplify/auth";
+import { fetchAuthSession, getCurrentUser, fetchUserAttributes } from "aws-amplify/auth";
 import { useEffect } from "react";
 
 type UploadStatus = "idle" | "uploading" | "success" | "error";
@@ -30,6 +27,11 @@ export default function UploadPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
+  // Background S3 upload states
+  const [s3UploadStatus, setS3UploadStatus] = useState<"idle" | "uploading" | "success" | "error">("idle");
+  const [uploadedUrl, setUploadedUrl] = useState("");
+  const [uploadedFileName, setUploadedFileName] = useState("");
+
   useEffect(() => {
     const checkUser = async () => {
       try {
@@ -42,15 +44,78 @@ export default function UploadPage() {
     checkUser();
   }, [router]);
 
+  const uploadFileToS3 = async (selectedFile: File) => {
+    setS3UploadStatus("uploading");
+    setErrorMsg("");
+    setProgress("Uploading video file...");
+
+    try {
+      // Step A: Request presigned URL
+      const presignRes = await fetch(`${API_BASE_URL}/upload-url`, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ fileName: selectedFile.name }),
+      });
+
+      if (!presignRes.ok) {
+        const errBody = await presignRes.json().catch(() => ({}));
+        throw new Error(errBody.detail || errBody.error || `Failed to get upload URL`);
+      }
+
+      const { uploadUrl, fileName } = await presignRes.json();
+
+      // Step B: Upload file directly to S3
+      const uploadRes = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": selectedFile.type || "video/mp4",
+        },
+        body: selectedFile,
+      });
+
+      if (!uploadRes.ok) {
+        throw new Error(`File upload failed (${uploadRes.status})`);
+      }
+
+      const finalVideoUrl = stripQueryParams(uploadUrl);
+      setUploadedUrl(finalVideoUrl);
+      setUploadedFileName(fileName);
+      setS3UploadStatus("success");
+      setProgress("Upload complete!");
+    } catch (err) {
+      console.error("S3 upload error:", err);
+      setS3UploadStatus("error");
+      setErrorMsg(err instanceof Error ? err.message : "S3 upload failed.");
+      setProgress("");
+    }
+  };
+
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
     if (selected) {
       setFile(selected);
+      uploadFileToS3(selected);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    const selected = e.dataTransfer.files?.[0];
+    if (selected) {
+      setFile(selected);
+      uploadFileToS3(selected);
     }
   };
 
   const removeFile = () => {
     setFile(null);
+    setS3UploadStatus("idle");
+    setUploadedUrl("");
+    setUploadedFileName("");
+    setProgress("");
+    setErrorMsg("");
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -58,60 +123,32 @@ export default function UploadPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!file || !title.trim()) return;
+    if (!uploadedUrl || !uploadedFileName || !title.trim()) return;
 
     setStatus("uploading");
     setErrorMsg("");
+    setProgress("Saving video metadata...");
 
     try {
-      // Step A: Request presigned URL
-      setProgress("Requesting upload URL...");
-
-      const presignRes = await fetch(`${API_BASE_URL}/upload-url`, {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ fileName: file.name }),
-      });
-
-      if (!presignRes.ok) {
-        const errBody = await presignRes.json().catch(() => ({}));
-        console.error("[Auth Debug] Upload URL error response:", JSON.stringify(errBody));
-        console.error("[Auth Debug] Status:", presignRes.status);
-        throw new Error(errBody.detail || errBody.error || `Failed to get upload URL (${presignRes.status})`);
+      // Fetch user attributes from Cognito
+      let creatorName = "DOSHUB Creator";
+      let uploaderEmail = "unknown";
+      try {
+        const userAttrs = await fetchUserAttributes();
+        creatorName = userAttrs.name || userAttrs.email?.split("@")[0] || "DOSHUB Creator";
+        uploaderEmail = userAttrs.email || "unknown";
+      } catch (authErr) {
+        console.error("Failed to fetch user attributes, using fallback", authErr);
       }
 
-      const presignData = await presignRes.json();
-      const { uploadUrl, fileName } = presignData;
-      console.log("[Step A] Presigned URL response:", presignData);
-
-      // Step B: Upload file directly to S3 (bypasses Next.js server limits)
-      setProgress("Uploading video file...");
-      
-      const uploadRes = await fetch(uploadUrl, {
-        method: "PUT",
-        headers: {
-          "Content-Type": file.type || "video/mp4",
-        },
-        body: file, // Send the file object directly (as a stream)
-      });
-
-      if (!uploadRes.ok) {
-        console.error("[Step B] S3 direct upload failed:", uploadRes.status);
-        throw new Error(`File upload failed (${uploadRes.status})`);
-      }
-      console.log("[Step B] S3 upload succeeded");
-
-      // Step C: Save video metadata to database
-      setProgress("Saving video metadata...");
-      const videoUrl = stripQueryParams(uploadUrl);
       const saveBody = {
-        video_id: fileName, // format snake_case
-        videoId: fileName,  // format camelCase (fallback)
+        video_id: uploadedFileName, // format snake_case
+        videoId: uploadedFileName,  // format camelCase (fallback)
         title: title.trim(),
-        video_url: videoUrl,
-        videoUrl: videoUrl,
+        video_url: uploadedUrl,
+        videoUrl: uploadedUrl,
+        creator: creatorName,
+        uploader: uploaderEmail,
       };
       
       const saveRes = await fetch(`${API_BASE_URL}/save-video`, {
@@ -152,7 +189,7 @@ export default function UploadPage() {
   if (status === "success") {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 p-10 max-w-md w-full text-center">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-10 max-w-md w-full text-center">
           <div className="bg-green-50 dark:bg-green-900/30 rounded-full p-4 w-fit mx-auto mb-4">
             <CheckCircle className="w-12 h-12 text-green-500" />
           </div>
@@ -189,7 +226,7 @@ export default function UploadPage() {
 
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 p-8 max-w-lg w-full">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8 max-w-lg w-full">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="bg-blue-50 dark:bg-blue-900/30 rounded-full p-4 w-fit mx-auto mb-3">
@@ -230,6 +267,9 @@ export default function UploadPage() {
             {!file ? (
               <label
                 htmlFor="video-file"
+                onDragOver={(e) => e.preventDefault()}
+                onDragEnter={(e) => e.preventDefault()}
+                onDrop={handleDrop}
                 className="upload-zone flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl cursor-pointer bg-gray-50 dark:bg-gray-800/50 hover:dark:bg-gray-800"
               >
                 <FileVideo className="w-10 h-10 text-gray-300 dark:text-gray-600 mb-2" />
@@ -247,25 +287,42 @@ export default function UploadPage() {
                   accept=".mp4,.webm,video/mp4,video/webm"
                   onChange={handleFileChange}
                   className="hidden"
-                  disabled={status === "uploading"}
+                  disabled={status === "uploading" || s3UploadStatus === "uploading"}
                 />
               </label>
             ) : (
-              <div className="flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-xl">
+              <div className={`flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-xl transition-all duration-300 ${
+                s3UploadStatus === "uploading" ? "upload-loading-border" : ""
+              }`}>
                 <FileVideo className="w-8 h-8 text-blue-500 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
                     {file.name}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {(file.size / (1024 * 1024)).toFixed(2)} MB
-                  </p>
+                  {s3UploadStatus === "uploading" ? (
+                    <p className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1.5 mt-0.5">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Uploading to S3...</span>
+                    </p>
+                  ) : s3UploadStatus === "success" ? (
+                    <p className="text-xs text-green-600 dark:text-green-400 mt-0.5 font-medium flex items-center gap-1">
+                      <span>✓ Upload complete! Ready to publish.</span>
+                    </p>
+                  ) : s3UploadStatus === "error" ? (
+                    <p className="text-xs text-red-600 dark:text-red-400 mt-0.5 font-medium">
+                      Upload failed. Please try again.
+                    </p>
+                  ) : (
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {(file.size / (1024 * 1024)).toFixed(2)} MB
+                    </p>
+                  )}
                 </div>
-                {status !== "uploading" && (
+                {status !== "uploading" && s3UploadStatus !== "uploading" && (
                   <button
                     type="button"
                     onClick={removeFile}
-                    className="p-1 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/50 transition"
+                    className="p-1 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/50 transition cursor-pointer"
                   >
                     <X className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                   </button>
@@ -275,7 +332,7 @@ export default function UploadPage() {
           </div>
 
           {/* Error Message */}
-          {status === "error" && (
+          {(status === "error" || (s3UploadStatus === "error" && errorMsg)) && (
             <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl">
               <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
               <p className="text-sm text-red-600 dark:text-red-400">{errorMsg}</p>
@@ -285,18 +342,27 @@ export default function UploadPage() {
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={!file || !title.trim() || status === "uploading"}
-            className="w-full flex items-center justify-center gap-2 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-all hover:shadow-lg hover:shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none active:scale-[0.98]"
+            disabled={!file || !title.trim() || s3UploadStatus !== "success" || status === "uploading"}
+            className={`w-full flex items-center justify-center gap-2 py-3 font-semibold rounded-xl transition-all duration-200 active:scale-[0.98] ${
+              (!file || !title.trim() || s3UploadStatus !== "success" || status === "uploading")
+                ? "bg-gray-200 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-blue-200 dark:hover:shadow-none cursor-pointer"
+            }`}
           >
-            {status === "uploading" ? (
+            {s3UploadStatus === "uploading" ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                <span>{progress || "Uploading..."}</span>
+                <span>Uploading file to S3...</span>
+              </>
+            ) : status === "uploading" ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span>Publishing video...</span>
               </>
             ) : (
               <>
                 <Upload className="w-5 h-5" />
-                <span>Upload Video</span>
+                <span>Publish Video</span>
               </>
             )}
           </button>

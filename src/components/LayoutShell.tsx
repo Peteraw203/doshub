@@ -12,11 +12,11 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
       <Navbar onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
       <Sidebar isOpen={sidebarOpen} />
       <main
-        className={`mt-14 min-h-[calc(100vh-3.5rem)] transition-all duration-300 ease-in-out bg-gray-50 dark:bg-[#0a0a0a] ${
+        className={`mt-14 min-h-[calc(100vh-3.5rem)] transition-[margin-left] duration-300 ease-in-out bg-gray-50 dark:bg-[#0a0a0a] ${
           sidebarOpen ? "ml-56" : "ml-[72px]"
         }`}
       >
-        <div className="p-6">{children}</div>
+        <div className="w-[90%] mx-auto py-6">{children}</div>
       </main>
     </>
   );

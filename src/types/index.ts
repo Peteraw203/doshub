@@ -4,6 +4,8 @@ export interface Video {
   videoUrl: string;
   uploadTime: string;
   likes: number;
+  creator?: string;
+  uploader?: string;
 }
 
 export interface UploadUrlResponse {

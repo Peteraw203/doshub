@@ -123,7 +123,7 @@ export default function VideoPlayerPage() {
     <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-6">
       {/* KIRI: Video Player Utama (70%) */}
       <div className="w-full lg:w-[70%] flex flex-col gap-4">
-        <div className="w-full aspect-video bg-black rounded-xl overflow-hidden shadow-lg border border-gray-100 dark:border-gray-800">
+        <div className="w-full aspect-video bg-black rounded-xl overflow-hidden shadow-md">
           <video
             src={video.videoUrl}
             controls
@@ -142,10 +142,10 @@ export default function VideoPlayerPage() {
             {/* Creator Info */}
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold">
-                {video.title?.charAt(0)?.toUpperCase() || "D"}
+                {(video.creator || "DOSHUB Creator").charAt(0).toUpperCase()}
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">DOSHUB Creator</h3>
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{video.creator || "DOSHUB Creator"}</h3>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   {video.uploadTime ? timeAgo(video.uploadTime) : "Baru saja"}
                 </p>
