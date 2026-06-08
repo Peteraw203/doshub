@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo, Suspense } from "react";
 import Link from "next/link";
-import { Play, Flame } from "lucide-react";
+import { Play } from "lucide-react";
 import { Video, VideosResponse } from "@/types";
 import { timeAgo, API_BASE_URL } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
@@ -128,14 +128,13 @@ function HomePageContent() {
       {/* Page Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-          <Flame className="w-6 h-6 text-blue-600 dark:text-blue-500" />
           {searchQuery ? "Search Results" : "Trending Now"}
         </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          {searchQuery
-            ? `Displaying closest matches for "${searchQuery}"`
-            : "Discover the latest videos from creators"}
-        </p>
+        {searchQuery && (
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Displaying closest matches for "{searchQuery}"
+          </p>
+        )}
       </div>
 
       {/* Error State */}
@@ -256,7 +255,6 @@ export default function HomePage() {
       <div>
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <Flame className="w-6 h-6 text-blue-600 dark:text-blue-500" />
             Trending Now
           </h1>
         </div>
